@@ -25,7 +25,7 @@ const UserTreeViewPage = () => {
     const authUser = useAuth();
     const authService = new Auth();
     const transactionService = new transaction();
-    const roles = ["SuperAdmin", "Admin", "Partner", "Assistant", "User"];
+    const roles = ["Owner", "Partner", "SuperAgent", "Agent", "User"]; // Updated to match backend
 
     const openUpdateModal = () => {
         if (selectedUser) {
@@ -43,18 +43,25 @@ const UserTreeViewPage = () => {
         setShowTransferModal(false);
         setShowDeleteModal(false);
     };
-
     useEffect(() => {
         const fetchUser = async () => {
+            if (!authUser?.user?._id) {
+                console.error("User ID is undefined.");
+                toast.error("Utilisateur introuvable. Veuillez vous reconnecter.");
+                navigate("/login"); // Redirect to login if user data is invalid
+                return;
+            }
+    
             setLoading(true);
+    
             try {
-                const result = await authService.getUserById(authUser.user.user._id);
+                const result = await authService.getUserById(authUser.user._id);
                 if (result.success) {
                     setSelectedUser(result.user);
                     setNewUsername(result.user.username);
                     setRole(result.user.role);
-
-                    const treeResult = await authService.getUsersByCreaterId(authUser.user.user._id);
+    
+                    const treeResult = await authService.getUsersByCreaterId(authUser.user._id);
                     if (treeResult.success) {
                         setUserTreeData(treeResult.user);
                     }
@@ -66,9 +73,10 @@ const UserTreeViewPage = () => {
                 setLoading(false);
             }
         };
-
+    
         fetchUser();
     }, [authUser]);
+    
 
     const handleUserSelect = (user) => {
         setSelectedUser(user);
@@ -77,89 +85,130 @@ const UserTreeViewPage = () => {
     };
 
     const handleUpdate = async () => {
+        if (!selectedUser) return;
+    
         try {
-            const updateResult = await authService.updateUser(selectedUser._id, { username: newUsername, password: newPassword, role });
+            const updateResult = await authService.updateUser(selectedUser._id, {
+                username: newUsername,
+                password: newPassword,
+                role,
+            });
+    
             if (updateResult.success) {
-                closeModals();
-                if (selectedUser._id === authUser.user.user._id) {
-                    updateUser({ ...authUser.user, role });
-                }
                 toast.success('Utilisateur mis à jour avec succès!');
-                window.location.reload();
+                closeModals();
+    
+                // Update local user context if current user is updated
+                if (selectedUser._id === authUser.user._id) {
+                    updateUser({ ...authUser.user, username: newUsername, role });
+                }
+    
+                // Refresh tree view without reloading the page
+                setUserTreeData((prevData) => {
+                    // Update the local tree data with new user info
+                    const updateTree = (node) =>
+                        node._id === selectedUser._id
+                            ? { ...node, username: newUsername, role }
+                            : { ...node, children: node.children?.map(updateTree) };
+                    return updateTree(prevData);
+                });
             } else {
-                console.error("Error updating user:", updateResult.message);
-                toast.error("Erreur lors de la mise à jour de l'utilisateur.");
+                toast.error(updateResult.message || "Erreur lors de la mise à jour de l'utilisateur.");
             }
         } catch (error) {
             console.error("Error during update:", error);
-            toast.error("Erreur lors de la mise à jour de l'utilisateur.");
+            toast.error("Une erreur est survenue pendant la mise à jour.");
         }
     };
-
+    
     const handleDelete = async () => {
         if (!selectedUser) return;
-
+    
         const confirmed = window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?');
-        if (confirmed) {
-            setLoading(true);
-            try {
-                const result = await authService.deleteUserById(selectedUser._id);
-                if (result.success) {
-                    toast.success('Utilisateur supprimé avec succès');
-                    setTimeout(() => navigate('/users'), 2000);
-                } else {
-                    toast.error('Erreur lors de la suppression : ' + result.message);
-                }
-            } catch (error) {
-                toast.error('Erreur lors de la suppression.');
-            } finally {
-                setLoading(false);
+        if (!confirmed) return;
+    
+        setLoading(true);
+    
+        try {
+            const result = await authService.deleteUserById(selectedUser._id);
+    
+            if (result.success) {
+                toast.success('Utilisateur supprimé avec succès!');
+    
+                // Refresh the tree view after deletion
+                setUserTreeData((prevData) => {
+                    const removeFromTree = (node) =>
+                        node._id === selectedUser._id
+                            ? null
+                            : { ...node, children: node.children?.map(removeFromTree).filter(Boolean) };
+                    return removeFromTree(prevData);
+                });
+    
                 closeModals();
+            } else {
+                toast.error(result.message || 'Erreur lors de la suppression.');
             }
+        } catch (error) {
+            console.error("Error during deletion:", error);
+            toast.error("Une erreur est survenue pendant la suppression.");
+        } finally {
+            setLoading(false);
         }
     };
-
+    
     const handleDeposit = async () => {
+        if (!amount || amount <= 0) {
+            toast.error('Veuillez entrer un montant valide.');
+            return;
+        }
+    
         try {
             const response = await transactionService.makeTransfer(
-                authUser.user.user._id,
+                authUser.user._id,
                 selectedUser._id,
                 amount,
                 "deposit",
                 ""
             );
+    
             if (response.success) {
                 toast.success('Dépôt effectué avec succès!');
-                setAmount(0); 
-                closeModals(); 
+                setAmount(0); // Reset the amount input
+                closeModals();
             } else {
                 toast.error(response.message || 'Erreur lors du dépôt.');
             }
         } catch (error) {
             console.error("Error during deposit:", error);
-            toast.error('Erreur lors de la connexion au service de transfert.');
+            toast.error('Une erreur est survenue pendant le dépôt.');
         }
     };
-
+    
     const handleWithdraw = async () => {
+        if (!amount || amount <= 0) {
+            toast.error('Veuillez entrer un montant valide.');
+            return;
+        }
+    
         try {
             const response = await transactionService.makeTransfer(
-                authUser.user.user._id,
+                authUser.user._id,
                 selectedUser._id,
                 amount,
                 "withdraw",
                 ""
             );
+    
             if (response.success) {
                 toast.success('Retrait effectué avec succès!');
-                setAmount(0); // Réinitialiser le montant après le retrait
-                closeModals(); // Fermer le modal après la réussite
+                setAmount(0); // Reset the amount input
+                closeModals();
             } else {
                 toast.error(response.message || 'Erreur lors du retrait.');
             }
         } catch (error) {
             console.error("Error during withdraw:", error);
-            toast.error('Erreur lors de la connexion au service de transfert.');
+            toast.error('Une erreur est survenue pendant le retrait.');
         }
     };
 

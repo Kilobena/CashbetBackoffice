@@ -19,17 +19,18 @@ import 'react-toastify/dist/ReactToastify.css';
 // Role-based route protection component
 function RoleProtectedRoute({ element, requiredRole, redirectPath = "/login" }) {
     const { user } = useAuth();
-    const isAuthenticated = !!user;
-    const hasRequiredRole = user?.user?.role === requiredRole; // Adjusted for user object structure
 
-    // If not authenticated, redirect to login
+    // Debug: Log the user object to inspect its structure
+    console.log("Current user object:", user);
+
+    const isAuthenticated = !!user;
+    const userRole = user?.role; // Adjust based on actual structure
+
     if (!isAuthenticated) {
         return <Navigate to={redirectPath} replace />;
     }
 
-    // If role is incorrect, show toast and redirect to login
-    if (!hasRequiredRole) {
-        // Display toast notification
+    if (userRole !== requiredRole) {
         import('react-toastify').then(({ toast }) => {
             toast.error("You are not allowed to sign in because you don't have permission.", {
                 position: "top-right",
@@ -70,42 +71,42 @@ function AuthContent() {
                 {/* Public route for login */}
                 <Route path="/login" element={<Login />} />
 
-                {/* Routes only accessible to users with role 'SuperPartner' */}
+                {/* Routes only accessible to users with role 'Owner' */}
                 <Route 
                     path="/" 
-                    element={<RoleProtectedRoute element={<DashboardPage />} requiredRole="SuperPartner" />} 
+                    element={<RoleProtectedRoute element={<DashboardPage />} requiredRole="Owner" />} 
                 />
                 <Route 
                     path="/users" 
-                    element={<RoleProtectedRoute element={<Users />} requiredRole="SuperPartner" />} 
+                    element={<RoleProtectedRoute element={<Users />} requiredRole="Owner" />} 
                 />
                 <Route 
                     path="/regitre" 
-                    element={<RoleProtectedRoute element={<RegisterForm />} requiredRole="SuperPartner" />} 
+                    element={<RoleProtectedRoute element={<RegisterForm />} requiredRole="Owner" />} 
                 />
                 <Route 
                     path="/usersDetails/:userId" 
-                    element={<RoleProtectedRoute element={<UserDetails />} requiredRole="SuperPartner" />} 
+                    element={<RoleProtectedRoute element={<UserDetails />} requiredRole="Owner" />} 
                 />
                 <Route 
                     path="/ArbreUtilisateurs" 
-                    element={<RoleProtectedRoute element={<UserTreeViewPage />} requiredRole="SuperPartner" />} 
+                    element={<RoleProtectedRoute element={<UserTreeViewPage />} requiredRole="Owner" />} 
                 />
                 <Route 
                     path="/CMS" 
-                    element={<RoleProtectedRoute element={<CMS />} requiredRole="SuperPartner" />} 
+                    element={<RoleProtectedRoute element={<CMS />} requiredRole="Owner" />} 
                 />
                 <Route 
                     path="/ParametresJeux" 
-                    element={<RoleProtectedRoute element={<ParametresJeux />} requiredRole="SuperPartner" />} 
+                    element={<RoleProtectedRoute element={<ParametresJeux />} requiredRole="Owner" />} 
                 />
                 <Route 
                     path="/TotauxTransactions" 
-                    element={<RoleProtectedRoute element={<TotauxTransactions />} requiredRole="SuperPartner" />} 
+                    element={<RoleProtectedRoute element={<TotauxTransactions />} requiredRole="Owner" />} 
                 />
                 <Route 
                     path="/trunsuctionhistory" 
-                    element={<RoleProtectedRoute element={<TransferHistory />} requiredRole="SuperPartner" />} 
+                    element={<RoleProtectedRoute element={<TransferHistory />} requiredRole="Owner" />} 
                 />
                 {/* Fallback route */}
                 <Route path="*" element={<Navigate to="/login" replace />} />

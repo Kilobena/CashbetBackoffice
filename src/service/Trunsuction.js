@@ -1,4 +1,5 @@
 import axios from "axios";
+import Cookies from "js-cookie"; // Importing js-cookie to manage cookiesl
 
 class TransferService {
     constructor(baseURL) {
@@ -7,116 +8,144 @@ class TransferService {
         });
     }
 
-    async makeTransfer(senderId, receiverId, amount, type, note) {
+    async makeTransfer(senderId, receiverId, amount, type, note, transactionId) {
         try {
-            const token = localStorage.getItem('token');
-
-            console.log("Sending transfer request to /tr/transfer");
-            console.log("Request payload:", { senderId, receiverId, amount, type, note });
-            console.log("Authorization token:", token);
-
-            const response = await this.api.post("/tr/transfer", {
-                senderId,
-                receiverId,
-                amount,
-                type,
-                note
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            });
-
-            console.log("Transfer response:", response.data);
-
-            return {
-                success: true,
-                message: response.data.message,
-                transfer: response.data.data.transfer,
-                updatedSender: response.data.updatedSender,
-                updatedReceiver: response.data.updatedReceiver
-            };
-        } catch (error) {
-            console.error("Erreur lors de la création du transfert :", error);
-            
-            if (error.response) {
-                console.log("Error response status:", error.response.status);
-                console.log("Error response data:", error.response.data);
-                return {
-                    success: false,
-                    message: error.response.data.message || "Une erreur est survenue lors de la création du transfert",
-                    status: error.response.status
-                };
-            } else {
-                return {
-                    success: false,
-                    message: "Erreur réseau ou le serveur est inaccessible.",
-                    status: 500
-                };
+          const token = Cookies.get("token");
+    
+          const response = await this.api.post(
+            "/tr/transfer",
+            {
+              senderId,
+              receiverId,
+              amount,
+              type,
+              note,
+              transaction_id: transactionId, // Include transaction_id in the payload
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             }
-        }
-    }
-
-    async getUserInfo(username, token) {
-        try {
-            const response = await this.api.get(`/auth/user/${username}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            });
-
-            return {
-                success: true,
-                user: response.data.user,
-            };
+          );
+    
+          return {
+            success: true,
+            message: response.data.message,
+            transfer: response.data.data.transfer,
+            updatedSender: response.data.updatedSender,
+            updatedReceiver: response.data.updatedReceiver,
+          };
         } catch (error) {
-            console.error("Erreur lors de la récupération des informations de l'utilisateur :", error);
+          console.error("Erreur lors de la création du transfert :", error);
+    
+          if (error.response) {
             return {
-                success: false,
-                message: error.response ? error.response.data.message : "Une erreur est survenue lors de la récupération des informations de l'utilisateur",
+              success: false,
+              message:
+                error.response.data.message ||
+                "Une erreur est survenue lors de la création du transfert",
+              status: error.response.status,
             };
+          } else {
+            return {
+              success: false,
+              message: "Erreur réseau ou le serveur est inaccessible.",
+              status: 500,
+            };
+          }
         }
-    }
-
-    async getTransferHistory(username, date) {
+      }
+    
+      async getUserInfo(username) {
         try {
-            const token = localStorage.getItem('token');
-            const response = await this.api.get(`/tr/transfer-history`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                params: { username, date }
-            });
-
-            return {
-                success: true,
-                transferHistory: response.data.transferHistory,
-            };
+          const token = Cookies.get('token');
+          const response = await this.api.get(`/auth/pages/User/${username}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+    
+          return {
+            success: true,
+            user: response.data.user,
+          };
         } catch (error) {
-            console.error("Error fetching transfer history:", error);
-            return {
-                success: false,
-                message: error.response?.data.message || "An error occurred while fetching transfer history",
-                status: error.response?.status || 500
-            };
+          console.error(
+            "Erreur lors de la récupération des informations de l'utilisateur :",
+            error
+          );
+          return {
+            success: false,
+            message: error.response
+              ? error.response.data.message
+              : "Une erreur est survenue lors de la récupération des informations de l'utilisateur",
+          };
         }
-    }
-     async getAllTransfers() {
+      }
+      async getTransferHistory(username, date) {
         try {
-            const token = localStorage.getItem('token');
+          const token = Cookies.get("token");
+          const response = await this.api.get(`/tr/transfer-history`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            params: { username, date },
+          });
+    
+          return {
+            success: true,
+            transferHistory: response.data.transferHistory,
+          };
+        } catch (error) {
+          console.error("Error fetching transfer history:", error);
+          return {
+            success: false,
+            message:
+              error.response?.data.message ||
+              "An error occurred while fetching transfer history",
+            status: error.response?.status || 500,
+          };
+        }
+      
+    }
+    async getAllTransfers() {
+        try {
+            const token = Cookies.get('token'); // Get the token from cookies
+            if (!token) {
+                throw new Error("Authorization token not found.");
+            }
+    
             const response = await this.api.get("/tr/all-transfers", {
                 headers: {
-                    Authorization: `Bearer ${token}`,  // Auth token
+                    Authorization: `Bearer ${token}`, // Auth token
                 },
             });
-
+    
+            console.log("All transfers response:", response.data);
+    
             return {
                 success: true,
-                transfers: response.data.transfers,
+                transfers: response.data.transfers.map((transfer) => ({
+                    id: transfer._id,
+                    sender: {
+                        id: transfer.senderId?._id || null,
+                        username: transfer.senderId?.username || "Unknown",
+                        role: transfer.senderId?.role || "Unknown",
+                    },
+                    receiver: {
+                        id: transfer.receiverId?._id || null,
+                        username: transfer.receiverId?.username || "Unknown",
+                        role: transfer.receiverId?.role || "Unknown",
+                    },
+                    amount: transfer.amount,
+                    date: transfer.date,
+                    type: transfer.type || "Unknown", // Assuming `type` exists or fallback
+                })),
             };
         } catch (error) {
             console.error("Error fetching all transfers:", error);
-
+    
             return {
                 success: false,
                 message: error.response?.data?.message || "Error fetching all transfers.",
@@ -124,6 +153,7 @@ class TransferService {
             };
         }
     }
+    
 
 }
 
