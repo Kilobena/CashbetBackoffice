@@ -47,7 +47,7 @@ const menuItems = [
   { label: 'Totaux des Transactions', icon: <FaSyncAlt size={24} />, route: '/TotauxTransactions', hasArrow: false },
   { label: 'Historique des Transactions', icon: <FaHistory size={24} />, route: '/trunsuctionhistory', hasArrow: false },
   { label: 'Arbre des Utilisateurs', icon: <FaSitemap size={24} />, route: '/ArbreUtilisateurs', hasArrow: false },
-  { label: 'Coupons', icon: <FaTicketAlt size={24} />, route: '/TotauxTransactions', hasArrow: false },
+  { label: 'Rapport quotidien', icon: <FaTicketAlt size={24} />, route: '/getDailyReport', hasArrow: false },
   { label: 'Retrait', icon: <FaMoneyBill size={24} />, route: '/TotauxTransactions', hasArrow: false },
   { label: 'Affiliés', icon: <FaHandshake size={24} />, route: '/TotauxTransactions', hasArrow: false },
 ];

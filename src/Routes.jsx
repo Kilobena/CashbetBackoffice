@@ -15,6 +15,7 @@ import TotauxTransactions from './Transaction/TotauxTransactions';
 import UserTreeViewPage from './Auth/UserTreeView';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import DailyReport from './pages/DailyReport ';
 
 // Role-based route protection component
 function RoleProtectedRoute({ element, requiredRole, redirectPath = "/login" }) {
@@ -68,49 +69,57 @@ function AuthContent() {
             {/* Render Header only if the user is authenticated and not on the login page */}
             {isAuthenticated && !isLoginPage && <Header />}
             <Routes>
-                {/* Public route for login */}
-                <Route path="/login" element={<Login />} />
+    {/* Public route for login */}
+    <Route path="/login" element={<Login />} />
 
-                {/* Routes only accessible to users with role 'Owner' */}
-                <Route 
-                    path="/" 
-                    element={<RoleProtectedRoute element={<DashboardPage />} requiredRole="Owner" />} 
-                />
-                <Route 
-                    path="/users" 
-                    element={<RoleProtectedRoute element={<Users />} requiredRole="Owner" />} 
-                />
-                <Route 
-                    path="/regitre" 
-                    element={<RoleProtectedRoute element={<RegisterForm />} requiredRole="Owner" />} 
-                />
-                <Route 
-                    path="/usersDetails/:userId" 
-                    element={<RoleProtectedRoute element={<UserDetails />} requiredRole="Owner" />} 
-                />
-                <Route 
-                    path="/ArbreUtilisateurs" 
-                    element={<RoleProtectedRoute element={<UserTreeViewPage />} requiredRole="Owner" />} 
-                />
-                <Route 
-                    path="/CMS" 
-                    element={<RoleProtectedRoute element={<CMS />} requiredRole="Owner" />} 
-                />
-                <Route 
-                    path="/ParametresJeux" 
-                    element={<RoleProtectedRoute element={<ParametresJeux />} requiredRole="Owner" />} 
-                />
-                <Route 
-                    path="/TotauxTransactions" 
-                    element={<RoleProtectedRoute element={<TotauxTransactions />} requiredRole="Owner" />} 
-                />
-                <Route 
-                    path="/trunsuctionhistory" 
-                    element={<RoleProtectedRoute element={<TransferHistory />} requiredRole="Owner" />} 
-                />
-                {/* Fallback route */}
-                <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+    {/* Protected route for Daily Report */}
+    <Route 
+        path="/getDailyReport" 
+        element={<RoleProtectedRoute element={<DailyReport />} requiredRole="Owner" />} 
+    />
+
+    {/* Routes only accessible to users with role 'Owner' */}
+    <Route 
+        path="/" 
+        element={<RoleProtectedRoute element={<DashboardPage />} requiredRole="Owner" />} 
+    />
+    <Route 
+        path="/users" 
+        element={<RoleProtectedRoute element={<Users />} requiredRole="Owner" />} 
+    />
+    <Route 
+        path="/regitre" 
+        element={<RoleProtectedRoute element={<RegisterForm />} requiredRole="Owner" />} 
+    />
+    <Route 
+        path="/usersDetails/:userId" 
+        element={<RoleProtectedRoute element={<UserDetails />} requiredRole="Owner" />} 
+    />
+    <Route 
+        path="/ArbreUtilisateurs" 
+        element={<RoleProtectedRoute element={<UserTreeViewPage />} requiredRole="Owner" />} 
+    />
+    <Route 
+        path="/CMS" 
+        element={<RoleProtectedRoute element={<CMS />} requiredRole="Owner" />} 
+    />
+    <Route 
+        path="/ParametresJeux" 
+        element={<RoleProtectedRoute element={<ParametresJeux />} requiredRole="Owner" />} 
+    />
+    <Route 
+        path="/TotauxTransactions" 
+        element={<RoleProtectedRoute element={<TotauxTransactions />} requiredRole="Owner" />} 
+    />
+    <Route 
+        path="/trunsuctionhistory" 
+        element={<RoleProtectedRoute element={<TransferHistory />} requiredRole="Owner" />} 
+    />
+    
+    {/* Fallback route */}
+    <Route path="*" element={<Navigate to="/login" replace />} />
+</Routes>
+
         </>
     );
 }
