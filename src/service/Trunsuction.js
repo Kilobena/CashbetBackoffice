@@ -110,53 +110,98 @@ class TransferService {
       
     }
     async getAllTransfers() {
-        try {
-            const token = Cookies.get('token'); // Get the token from cookies
-            if (!token) {
-                throw new Error("Authorization token not found.");
-            }
-    
-            const response = await this.api.get("/tr/all-transfers", {
-                headers: {
-                    Authorization: `Bearer ${token}`, // Auth token
-                },
-            });
-    
-            console.log("All transfers response:", response.data);
-    
-            return {
-                success: true,
-                transfers: response.data.transfers.map((transfer) => ({
-                    id: transfer._id,
-                    sender: {
-                        id: transfer.senderId?._id || null,
-                        username: transfer.senderId?.username || "Unknown",
-                        role: transfer.senderId?.role || "Unknown",
-                    },
-                    receiver: {
-                        id: transfer.receiverId?._id || null,
-                        username: transfer.receiverId?.username || "Unknown",
-                        role: transfer.receiverId?.role || "Unknown",
-                    },
-                    amount: transfer.amount,
-                    date: transfer.date,
-                    type: transfer.type || "Unknown", // Assuming `type` exists or fallback
-                })),
-            };
-        } catch (error) {
-            console.error("Error fetching all transfers:", error);
-    
-            return {
-                success: false,
-                message: error.response?.data?.message || "Error fetching all transfers.",
-                status: error.response?.status || 500,
-            };
-        }
-    }
-    
+      try {
+          const token = Cookies.get('token'); // Get the token from cookies
+          if (!token) {
+              throw new Error("Authorization token not found.");
+          }
+  
+          const response = await this.api.get("/tr/all-transfers", {
+              headers: {
+                  Authorization: `Bearer ${token}`, // Auth token
+              },
+          });
+  
+          console.log("All transfers response:", response.data);
+  
+          return {
+              success: true,
+              transfers: response.data.transfers.map((transfer) => ({
+                  id: transfer._id,
+                  sender: {
+                      id: transfer.senderId?._id || null,
+                      username: transfer.senderId?.username || "Unknown",
+                      role: transfer.senderId?.role || "Unknown",
+                  },
+                  receiver: {
+                      id: transfer.receiverId?._id || null,
+                      username: transfer.receiverId?.username || "Unknown",
+                      role: transfer.receiverId?.role || "Unknown",
+                  },
+                  transactionId: transfer.transaction_id || "N/A",
+                  amount: transfer.amount,
+                  date: transfer.date,
+                  type: transfer.type || "Unknown",
+                  note: transfer.note || "N/A",
+                  balanceBefore: transfer.balanceBefore || { sender: null, receiver: null },
+                  balanceAfter: transfer.balanceAfter || { sender: null, receiver: null },
+                  rolledBack: transfer.rolledBack || false,
+              })),
+          };
+      } catch (error) {
+          console.error("Error fetching all transfers:", error);
+  
+          return {
+              success: false,
+              message: error.response?.data?.message || "Error fetching all transfers.",
+              status: error.response?.status || 500,
+          };
+      }
+  }
+  
+
+    async getAgentTransactions() {
+      try {
+          const token = Cookies.get("token"); // Get the token from cookies
+          if (!token) {
+              throw new Error("Authorization token not found.");
+          }
+
+          const response = await this.api.get("/tr/agent-transfer", {
+              headers: {
+                  Authorization: `Bearer ${token}`,
+              },
+          });
+
+          console.log("Agent transactions response:", response.data);
+
+          return {
+              success: true,
+              agentTransactions: response.data.agentTransactions.map((transaction) => ({
+                  senderRole: transaction.senderRole,
+                  date: transaction.date,
+                  senderUsername: transaction.senderUsername,
+                  senderID: transaction.senderID,
+                  receiverID: transaction.receiverID,
+                  receiverUsername: transaction.receiverUsername,
+                  senderBalanceBefore: transaction.senderBalanceBefore,
+                  senderBalanceAfter: transaction.senderBalanceAfter,
+                  receiverBalanceBefore: transaction.receiverBalanceBefore,
+                  receiverBalanceAfter: transaction.receiverBalanceAfter,
+                  amount: transaction.amount, // Include amount in the response mapping
+              })),
+          };
+      } catch (error) {
+          console.error("Error fetching agent transactions:", error);
+
+          return {
+              success: false,
+              message: error.response?.data?.message || "Error fetching agent transactions.",
+              status: error.response?.status || 500,
+          };
+      }
+  }
 
 }
-
-
 
 export default TransferService;

@@ -15,7 +15,10 @@ import TotauxTransactions from './Transaction/TotauxTransactions';
 import UserTreeViewPage from './Auth/UserTreeView';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import DailyReport from './pages/DailyReport ';
+import DailyReport from './RapportGGR/DailyReport ';
+import AgentTransfer from './Transaction/AgentTransfer';
+import SystemData from './RapportGGR/SystemData';
+import ReportGGR from './RapportGGR/RapportGGR';
 
 // Role-based route protection component
 function RoleProtectedRoute({ element, requiredRole, redirectPath = "/login" }) {
@@ -78,6 +81,19 @@ function AuthContent() {
         element={<RoleProtectedRoute element={<DailyReport />} requiredRole="Owner" />} 
     />
 
+<Route 
+        path="/RapportGGR" 
+        element={<RoleProtectedRoute element={<ReportGGR />} requiredRole="Owner" />} 
+        />
+
+        <Route 
+        path="/AgentTransuction" 
+        element={<RoleProtectedRoute element={<AgentTransfer />} requiredRole="Owner" />} 
+        />
+        <Route 
+        path="/SytemDaily" 
+        element={<RoleProtectedRoute element={<SystemData />} requiredRole="Owner" />} 
+        />
     {/* Routes only accessible to users with role 'Owner' */}
     <Route 
         path="/" 

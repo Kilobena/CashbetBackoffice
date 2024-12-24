@@ -40,14 +40,14 @@ const DashboardPage = () => {
 const menuItems = [
   { label: 'Nouvel Utilisateur', icon: <FaUserPlus size={24} />, route: '/regitre', hasArrow: false },
   { label: 'Utilisateurs', icon: <FaUsers size={24} />, route: '/users', hasArrow: false },
-  { label: 'Transactions', icon: <FaReceipt size={24} />, route: '/trunsuctionhistory', hasArrow: false },
-  { label: 'Rapport GGR', icon: <FaChartBar size={24} />, route: '/CMS', hasArrow: false },
+  { label: 'Agent Transactions', icon: <FaReceipt size={24} />, route: '/AgentTransuction', hasArrow: false },
+  { label: 'Rapport GGR', icon: <FaChartBar size={24} />, route: '/RapportGGR', hasArrow: false },
   { label: 'Paramètres des Jeux', icon: <FaGlobe size={24} />, route: '/ParametresJeux', hasArrow: true },
   { label: 'CMS', icon: <FaCog size={24} />, route: '/CMS', hasArrow: true },
   { label: 'Totaux des Transactions', icon: <FaSyncAlt size={24} />, route: '/TotauxTransactions', hasArrow: false },
   { label: 'Historique des Transactions', icon: <FaHistory size={24} />, route: '/trunsuctionhistory', hasArrow: false },
   { label: 'Arbre des Utilisateurs', icon: <FaSitemap size={24} />, route: '/ArbreUtilisateurs', hasArrow: false },
-  { label: 'Rapport quotidien', icon: <FaTicketAlt size={24} />, route: '/getDailyReport', hasArrow: false },
+  { label: 'Coupon', icon: <FaTicketAlt size={24} />, route: '/getDailyReport', hasArrow: false },
   { label: 'Retrait', icon: <FaMoneyBill size={24} />, route: '/TotauxTransactions', hasArrow: false },
   { label: 'Affiliés', icon: <FaHandshake size={24} />, route: '/TotauxTransactions', hasArrow: false },
 ];

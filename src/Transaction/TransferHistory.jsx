@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import TransferService from '../service/Trunsuction';
 import { FaSortUp, FaSortDown } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const TransferHistory = () => {
   const transferService = new TransferService();
@@ -12,6 +14,9 @@ const TransferHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [filterType, setFilterType] = useState(''); // State for transaction type filter
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -48,39 +53,87 @@ const TransferHistory = () => {
     );
   };
 
-  const filteredHistory = history.filter(
-    (transfer) =>
-      transfer.sender?.username.includes(searchTerm) ||
-      transfer.receiver?.username.includes(searchTerm) ||
-      transfer.type.includes(searchTerm)
-  );
+  const applyFilters = (data) => {
+    return data.filter((transfer) => {
+      // Search term filter
+      const matchesSearch =
+        transfer.sender?.username.includes(searchTerm) ||
+        transfer.receiver?.username.includes(searchTerm) ||
+        transfer.transactionId.includes(searchTerm);
 
+      // Date range filter
+      const matchesDateRange =
+        (!startDate || new Date(transfer.date) >= startDate) &&
+        (!endDate || new Date(transfer.date) <= endDate);
+
+      // Type filter
+      const matchesType = !filterType || transfer.type === filterType;
+
+      return matchesSearch && matchesDateRange && matchesType;
+    });
+  };
+
+  const filteredHistory = applyFilters(history);
   const displayedHistory = filteredHistory.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+
+  if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+  if (error) return <div className="h-screen flex items-center justify-center text-red-500">{error}</div>;
 
   return (
     <motion.div
-      className="container mx-auto p-6 bg-gray-50 rounded-xl shadow-lg"
+      className="h-screen w-full bg-gray-50 flex flex-col p-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <h1 className="text-4xl font-extrabold text-gray-800 mb-6">Historique des transactions</h1>
+      <h1 className="text-4xl font-extrabold text-gray-800 mb-6 text-center">Historique des transactions</h1>
 
-      {/* Search bar and items per page dropdown */}
       <div className="flex justify-between items-center mb-6">
+        {/* Search Input */}
         <input
           type="text"
-          placeholder="Rechercher par utilisateur ou type..."
+          placeholder="Rechercher..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="border border-gray-300 p-2 rounded-lg w-1/3"
         />
+
+        {/* Date Pickers */}
+        <div className="flex items-center space-x-2">
+          <DatePicker
+            selected={startDate}
+            onChange={(date) => setStartDate(date)}
+            placeholderText="Start Date"
+            className="border border-gray-300 p-2 rounded-lg"
+          />
+          <DatePicker
+            selected={endDate}
+            onChange={(date) => setEndDate(date)}
+            placeholderText="End Date"
+            className="border border-gray-300 p-2 rounded-lg"
+          />
+        </div>
+
+        {/* Transaction Type Filter */}
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="border border-gray-300 p-2 rounded-lg"
+        >
+          <option value="">All Types</option>
+          <option value="deposit">Deposit</option>
+          <option value="withdraw">Withdraw</option>
+          <option value="debit">Mise</option>
+          <option value="credit">Win</option>
+          
+        </select>
+
+        {/* Items Per Page */}
         <select
           value={itemsPerPage}
           onChange={(e) => setItemsPerPage(Number(e.target.value))}
@@ -94,23 +147,20 @@ const TransferHistory = () => {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-lg shadow-sm">
+      <div className="overflow-x-auto rounded-lg shadow-sm flex-grow">
         <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-md">
           <thead className="bg-gradient-to-r from-indigo-500 to-indigo-700 text-white">
             <tr>
-              <th className="py-3 px-4 text-left text-sm font-medium cursor-pointer" onClick={() => handleSort('date')}>
-                Date {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />)}
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-medium">Transaction ID</th>
-              <th className="py-3 px-4 text-left text-sm font-medium">De (Role)</th>
-              <th className="py-3 px-4 text-left text-sm font-medium">À (Role)</th>
-              <th className="py-3 px-4 text-left text-sm font-medium cursor-pointer" onClick={() => handleSort('type')}>
-                Type {sortConfig.key === 'type' && (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />)}
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-medium cursor-pointer" onClick={() => handleSort('amount')}>
-                Montant {sortConfig.key === 'amount' && (sortConfig.direction === 'asc' ? <FaSortUp /> : <FaSortDown />)}
-              </th>
+              <th onClick={() => handleSort('date')}>Date</th>
+              <th>Transaction ID</th>
+              <th>Sender (Role)</th>
+              <th>Receiver (Role)</th>
+              <th onClick={() => handleSort('type')}>Type</th>
+              <th onClick={() => handleSort('amount')}>Amount</th>
+              <th>Note</th>
+              <th>Balance Before</th>
+              <th>Balance After</th>
+              <th>Rolled Back</th>
             </tr>
           </thead>
           <tbody>
@@ -122,42 +172,61 @@ const TransferHistory = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: index * 0.05 }}
               >
-                <td className="py-3 px-4">{new Date(transfer.date).toLocaleString()}</td>
-                <td className="py-3 px-4">{transfer.id}</td>
-                <td className="py-3 px-4">
-                  {transfer.sender?.username} ({transfer.sender?.role})
+                <td className="py-3 px-4 text-sm text-gray-700">
+                  {new Date(transfer.date).toLocaleString('fr-FR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  })}
                 </td>
-                <td className="py-3 px-4">
-                  {transfer.receiver?.username} ({transfer.receiver?.role})
+                <td className="py-3 px-4 text-sm text-gray-700">{transfer.transactionId || 'N/A'}</td>
+                <td className="py-3 px-4 text-sm text-gray-700">
+                  {transfer.sender?.username || 'Unknown'} ({transfer.sender?.role || 'Unknown'})
                 </td>
-                <td className="py-3 px-4">{transfer.type}</td>
-                <td className="py-3 px-4">{transfer.amount} TND</td>
+                <td className="py-3 px-4 text-sm text-gray-700">
+                  {transfer.receiver?.username || 'Unknown'} ({transfer.receiver?.role || 'Unknown'})
+                </td>
+                <td
+                  className={`py-3 px-4 text-sm font-bold ${
+                    transfer.type === 'credit' ? 'text-green-600' : transfer.type === 'debit' ? 'text-red-600' : 'text-gray-700'
+                  }`}
+                >
+                  {transfer.type === 'credit' ? 'Win' : transfer.type === 'debit' ? 'Mise' : transfer.type}
+                </td>
+                <td className="py-3 px-4 text-sm text-gray-700">{transfer.amount.toFixed(2)} TND</td>
+                <td className="py-3 px-4 text-sm text-gray-700">{transfer.note || 'N/A'}</td>
+                <td className="py-3 px-4 text-sm text-gray-700">
+                  Sender: {transfer.balanceBefore?.sender?.toFixed(2) || 'N/A'} | Receiver: {transfer.balanceBefore?.receiver?.toFixed(2) || 'N/A'}
+                </td>
+                <td className="py-3 px-4 text-sm text-gray-700">
+                  Sender: {transfer.balanceAfter?.sender?.toFixed(2) || 'N/A'} | Receiver: {transfer.balanceAfter?.receiver?.toFixed(2) || 'N/A'}
+                </td>
+                <td className="py-3 px-4 text-sm text-gray-700">{transfer.rolledBack ? 'Yes' : 'No'}</td>
               </motion.tr>
             ))}
-
-            {displayedHistory.length === 0 && (
-              <tr>
-                <td colSpan="6" className="text-center text-gray-500 p-3">Aucune transaction trouvée</td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination controls */}
-      <div className="flex justify-between items-center py-4">
+      {/* Pagination Controls */}
+      <div className="flex justify-between items-center mt-4">
         <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
-          className="mr-2 px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50"
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          className="px-4 py-2 bg-indigo-500 text-white rounded-lg disabled:opacity-50"
         >
           Précédent
         </button>
-        <span>{currentPage} / {Math.ceil(filteredHistory.length / itemsPerPage)}</span>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
         <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredHistory.length / itemsPerPage)))}
-          disabled={currentPage === Math.ceil(filteredHistory.length / itemsPerPage)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50"
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          className="px-4 py-2 bg-indigo-500 text-white rounded-lg disabled:opacity-50"
         >
           Suivant
         </button>
